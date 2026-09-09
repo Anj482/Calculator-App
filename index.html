@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Calculator Project</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .calculator {
+      background: #222;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px #000;
+    }
+    #display {
+      width: 100%;
+      height: 50px;
+      font-size: 1.5em;
+      margin-bottom: 10px;
+      text-align: right;
+      padding: 10px;
+      border: none;
+      border-radius: 5px;
+      box-sizing: border-box;
+    }
+    .buttons {
+      display: grid;
+      grid-template-columns: repeat(4, 70px);
+      gap: 10px;
+    }
+    button {
+      height: 60px;
+      font-size: 1.2em;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #444;
+      color: #fff;
+    }
+    .operator {
+      background: #ff9500;
+      color: #fff;
+    }
+    .equal {
+      background: #28a745;
+      color: #fff;
+      grid-column: span 2;
+    }
+    .clear {
+      background: #dc3545;
+      color: #fff;
+      grid-column: span 2;
+    }
+  </style>
+</head>
+<body>
+  <div class="calculator">
+    <input type="text" id="display" disabled>
+    <div class="buttons">
+      <button onclick="appendValue('7')">7</button>
+      <button onclick="appendValue('8')">8</button>
+      <button onclick="appendValue('9')">9</button>
+      <button class="operator" onclick="appendValue('/')">÷</button>
+
+      <button onclick="appendValue('4')">4</button>
+      <button onclick="appendValue('5')">5</button>
+      <button onclick="appendValue('6')">6</button>
+      <button class="operator" onclick="appendValue('*')">×</button>
+
+      <button onclick="appendValue('1')">1</button>
+      <button onclick="appendValue('2')">2</button>
+      <button onclick="appendValue('3')">3</button>
+      <button class="operator" onclick="appendValue('-')">−</button>
+
+      <button onclick="appendValue('0')">0</button>
+      <button onclick="appendValue('.')">.</button>
+      <button class="operator" onclick="appendValue('+')">+</button>
+      <button class="equal" onclick="calculate()">=</button>
+
+      <button class="clear" onclick="clearDisplay()">C</button>
+    </div>
+  </div>
+
+  <script>
+    const display = document.getElementById('display');
+
+    function appendValue(value) {
+      if (display.value === "Error") display.value = "";
+      display.value += value;
+    }
+
+    // Safely evaluates a basic arithmetic expression of + - * / and decimals
+    // without resorting to eval(). Supports standard operator precedence
+    // (* and / before + and -) via a simple two-pass approach.
+    function safeEvaluate(expr) {
+      // Only allow digits, operators, decimal points, and whitespace
+      if (!/^[0-9+\-*/.\s]+$/.test(expr)) {
+        throw new Error("Invalid characters");
+      }
+
+      // Tokenize into numbers and operators
+      const tokens = expr.match(/(\d+\.?\d*)|[+\-*/]/g);
+      if (!tokens || tokens.length === 0) throw new Error("Empty expression");
+
+      // First pass: resolve * and /
+      let pass1 = [tokens[0]];
+      for (let i = 1; i < tokens.length; i += 2) {
+        const op = tokens[i];
+        const next = tokens[i + 1];
+        if (next === undefined) throw new Error("Incomplete expression");
+
+        if (op === '*' || op === '/') {
+          const a = parseFloat(pass1.pop());
+          const b = parseFloat(next);
+          if (op === '/' && b === 0) throw new Error("Divide by zero");
+          pass1.push(String(op === '*' ? a * b : a / b));
+        } else {
+          pass1.push(op, next);
+        }
+      }
+
+      // Second pass: resolve + and -
+      let result = parseFloat(pass1[0]);
+      for (let i = 1; i < pass1.length; i += 2) {
+        const op = pass1[i];
+        const val = parseFloat(pass1[i + 1]);
+        result = op === '+' ? result + val : result - val;
+      }
+
+      if (!isFinite(result)) throw new Error("Math error");
+      return result;
+    }
+
+    function calculate() {
+      try {
+        const result = safeEvaluate(display.value);
+        display.value = Math.round(result * 1e10) / 1e10;
+      } catch {
+        display.value = "Error";
+      }
+    }
+
+    function clearDisplay() {
+      display.value = "";
+    }
+  </script>
+</body>
+</html>
